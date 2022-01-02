@@ -1,0 +1,7 @@
+<ILTG>
+  <Parameter Name="Class" Guid="e2636c38-f179-4aa1-b087-ed6920d66e8e" new-Value="ShaderApi.SubsystemTerrain" Type="string" />    
+  <Parameter Name="Class" Guid="83c48cb5-353c-4e6b-876f-f5f41f9afe50" new-Value="ShaderApi.SubsystemModelsRenderer" Type="string" />    
+  <Parameter Name="Class" Guid="1739995d-79de-4d04-9763-432c22b3f416" new-Value="ShaderApi.SubsystemMovingBlocks" Type="string" />
+  <Parameter Name="Class" Guid="3c28d383-dc6e-4d55-8084-5d914abd4d79" new-Value="ShaderApi.SubsystemSky" Type="string" />
+  
+</ILTG>

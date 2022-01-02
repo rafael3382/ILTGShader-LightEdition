@@ -1,0 +1,270 @@
+
+#ifdef GLSL
+#define TRANSPARENT
+// this code was generated, the code that the developer codes is much cleaner than what you're seeing here
+
+// <Sampler Name='u_samplerState' Texture='u_texture' />
+// <Sampler Name='u_shaderTexSampler' Texture='u_shaderTex' />
+
+
+#ifdef GL_ES
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+#endif
+
+
+// <Sampler Name='u_screenSampler' Texture='u_screen' />
+uniform sampler2D u_screen;
+uniform vec2 u_screenSize;
+#define RESOLUTION u_screenSize
+#define SCREEN_UV (gl_FragCoord.xy / RESOLUTION)
+
+
+
+
+float CalculateLightIntensity(float timeOfDay)
+		{
+			if (timeOfDay <= 0.2 || timeOfDay > 0.8)
+			{
+				return 0.0;
+			}
+			if (timeOfDay > 0.2 && timeOfDay <= 0.3)
+			{
+				return (timeOfDay - 0.2) / 0.100000009;
+			}
+			if (timeOfDay > 0.3 && timeOfDay <= 0.7)
+			{
+				return 1.0;
+			}
+			return 1.0 - (timeOfDay - 0.7) / 0.100000024;
+}
+
+uniform sampler2D u_texture;
+uniform sampler2D u_shaderTex;
+
+
+uniform lowp float u_isReflection;
+
+// uniform sampler2D WaterTex;
+
+uniform vec3 u_fogColor;
+
+varying vec4 v_color;
+varying vec4 v_pure_color;
+varying vec2 v_texcoord;
+varying float v_incidence;
+varying float v_fog;
+uniform float u_time;
+uniform mediump vec3 u_viewDir;
+varying vec3 v_pos;
+varying vec3 v_playerPos;
+varying float wavelevel;
+#define color v_color
+
+// Safe to modify settings
+#define TorchColor vec3(1.3, 0.65, 0.0) * 2.0
+#define DuskColor vec3(0.7,0.2,0.1)
+
+//#define weird_reflection
+
+
+float opst = 1.0/16.0;
+vec2 repeat(vec2 uv, float chunk) {
+	return uv - (floor(uv / chunk) * chunk);
+}
+
+bool in_range(vec2 pos, vec2 start, vec2 stop) {
+return (pos.x >= start.x && pos.y >= start.y) && (pos.x < stop.x && pos.y < stop.y);
+}
+
+
+
+
+vec2 invert_y(vec2 b, float base) {
+	vec2 o = b;
+	o.y = base - o.y;
+	return o;
+}
+vec2 invert_y(float inv, vec2 b, float base) {
+    
+	vec2 o = b;
+	if (inv < 0.5) return vec2(o.x, o.y + (base / 3.5));
+	o.y = base - o.y;
+	return o;
+}
+
+
+
+
+
+
+
+vec3 invert_y(vec3 b, float base) {
+	vec3 o = b;
+	o.y = base - o.y;
+	return o;
+}
+
+vec2 get_block(vec2 block_uv) {
+
+return floor(block_uv / opst);
+}
+
+vec3 aces(vec3 x) {
+  const float a = 2.51;
+  const float b = 0.03;
+  const float c = 2.43;
+  const float d = 0.59;
+  const float e = 0.14;
+  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
+vec4 TexAdjustReflectionCoord(vec2 texcoord) {
+vec2 resultcoord = texcoord;
+
+
+
+
+
+
+
+
+
+
+
+
+
+resultcoord.y += u_viewDir.y*1.25;
+
+
+if (resultcoord.x > 1.0 || resultcoord.y > 1.0 ||  resultcoord.x < 0.0 || resultcoord.y < 0.0) return vec4(0.0);
+return texture2D(u_screen, resultcoord);
+
+}
+float remainder(float x, float a) {
+	if (a == 0.0) {return 0.0;}
+	return (x - (floor(x/a)*a));
+}
+uniform vec2 u_waterDrops;
+
+
+bool Efect = true;
+void main()
+{
+    
+    
+    
+	// Color
+	 lowp vec4 result = v_color;
+   
+     
+      
+	
+	 
+        lowp float LightAmount = max(v_pure_color.x, max(v_pure_color.y, v_pure_color.z));
+		//result.rgb *= texture2D(WaterTex, SCREEN_UV).rgb;
+	    vec3 frame1 = texture2D(u_shaderTex, fract((v_pos.xz/16.0)-vec2(0.0, u_time * 30.0))).rgb;
+	    vec3 frame2 = texture2D(u_shaderTex, fract((vec2(-v_pos.x, v_pos.z)/16.0)-vec2(0.0, u_time * 30.0))).rgb;
+        
+	    if (u_time >= 0.75 && u_time < 0.8) {
+              float dusk_intensity = ((v_pos.x-v_playerPos.x)/6.0)-((u_time-0.7)*180.0);
+    	      frame1 *= mix(vec3(1.0), DuskColor*1.8, min(4.0, max(0.0, dusk_intensity)));
+              frame2 *= mix(vec3(1.0), DuskColor*1.8, min(4.0, max(0.0, dusk_intensity)));
+    	      result.rgb = mix(result.rgb, vec3(LightAmount), min(4.0, max(0.0, dusk_intensity)));
+    	
+    	} 
+	    vec3 diffuse = mix(frame1, frame2, (cos(u_time*2000.)+1.0)/2.0);
+	    
+    
+        
+        result.rgb += diffuse * 2.0 * LightAmount;
+        
+	    result.a *= texture2D(u_texture, v_texcoord).a;
+    	
+    	float SkyLight = CalculateLightIntensity(u_time);
+    	
+        
+        
+
+         
+       bool is_day = u_time >= 0.2 && u_time < 0.7;
+      bool Shadow = false;
+  	if (v_color.a <= 0.0 && LightAmount < 0.25 && SkyLight > 0.9) {
+   	result.rgb *= 0.6;
+       Shadow = true;
+      
+      } 
+        
+        
+        
+        
+        
+        
+    	
+    	
+    
+    	// Return
+        
+        /*if (!Shadow)
+           result.a = 0.4 * mix(1.0, premultipliedFogColor.a, v_fog);*/
+        
+        
+        
+        float Luma = dot(result.rgb, vec3(0.3, 0.3, 0.3));
+      vec3 Chroma = result.rgb - Luma;
+      result.rgb = (Chroma * 1.0) + Luma;
+
+      
+        
+        
+        
+        
+        if (v_pure_color.a < 0.5) {
+        vec2 coord = invert_y(SCREEN_UV, 1.0);
+        
+        
+        coord += tan(wavelevel) * 0.1;
+        coord += 0.05-(diffuse.b * 0.05);
+        
+        coord = clamp(coord, 0.0, 1.0);
+        
+        
+        vec4 OldPixelColor = TexAdjustReflectionCoord(coord);
+	    
+            if (OldPixelColor.g > 0.2 && OldPixelColor.a == 1.0)
+            {
+            result.rgb = mix(result.rgb, OldPixelColor.rgb, 0.8);
+            } else {
+                result.rgb = mix(result.rgb, OldPixelColor.rgb, 0.6);
+            }
+        
+        
+
+        result *= 0.8;
+        result.a = 0.8;
+        
+        
+        }
+        result.rgb = aces(result.rgb) / 1.3;
+        
+        
+        // Fog
+    	vec4 premultipliedFogColor = vec4(u_fogColor * result.a, result.a);
+    	result = mix(result, premultipliedFogColor, v_fog);
+    	
+    
+    
+
+        
+        
+        
+        
+    	gl_FragColor = result;
+	
+	
+}
+
+#endif

@@ -1,0 +1,9 @@
+/sdcard/SurvivalCraft2.2/LightGraphics/CompileFiles/bin/Release/ShaderApi.dll
+/sdcard/SurvivalCraft2.2/LightGraphics/CompileFiles/bin/Release/ShaderApi.pdb
+/sdcard/SurvivalCraft2.2/LightGraphics/ShaderApi/obj/Debug/ShaderApi.csprojAssemblyReference.cache
+/sdcard/SurvivalCraft2.2/LightGraphics/ShaderApi/obj/Debug/ShaderApi.csproj.CoreCompileInputs.cache
+/sdcard/SurvivalCraft2.2/LightGraphics/ShaderApi/obj/Debug/ShaderApi.csproj.CopyComplete
+/sdcard/SurvivalCraft2.2/LightGraphics/ShaderApi/obj/Debug/ShaderApi.dll
+/sdcard/SurvivalCraft2.2/LightGraphics/ShaderApi/obj/Debug/ShaderApi.pdb
+/sdcard/SurvivalCraft2.2/LightGraphics/CompileFiles/bin/Debug/ShaderApi.dll
+/sdcard/SurvivalCraft2.2/LightGraphics/CompileFiles/bin/Debug/ShaderApi.pdb

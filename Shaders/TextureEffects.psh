@@ -1,0 +1,148 @@
+#ifdef GLSL
+
+// <Sampler Name='u_samplerState' Texture='u_texture' />
+
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+#ifdef USE_TEXTURE
+uniform sampler2D u_texture;
+#endif
+#ifdef USE_ALPHATHRESHOLD
+uniform float u_alphaThreshold;
+#endif
+
+#ifdef USE_TEXTURE
+varying vec2 v_texcoord;
+#endif
+varying vec4 v_color;
+
+const float opst = (1.0/16.0);
+
+
+int get_block(vec2 block_uv) {
+
+vec2 texcoord =  floor(block_uv / opst);
+return int(texcoord.x + (texcoord.y*16.0));
+}
+
+#ifdef POM
+uniform vec3 viewDir;
+
+vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
+{ 
+    
+    
+   // number of depth layers
+    const float numLayers = 32.0;
+    // calculate the size of each layer
+    float layerDepth = 1.0 / numLayers;
+    // depth of current layer
+    float currentLayerDepth = 0.0;
+    // the amount to shift the texture coordinates per layer (from vector P)
+    vec2 P = viewDir.xy * 0.4; 
+    vec2 deltaTexCoords = P / numLayers;
+     
+// get initial values
+vec2  currentTexCoords     = texCoords;
+vec2 realTexcoord = (floor(v_texcoord/opst)*opst)+currentTexCoords*opst;
+float currentDepthMapValue = texture2D(u_depthMap, realTexcoord).r;
+  
+while(currentLayerDepth < currentDepthMapValue)
+{
+    // shift texture coordinates along direction of P
+    currentTexCoords -= deltaTexCoords;
+    // get depthmap value at current texture coordi nates
+    realTexcoord = (floor(v_texcoord/opst)*opst)+currentTexCoords*opst;
+    currentDepthMapValue = texture2D(u_depthMap, realTexcoord).r;  
+    // get depth of next layer
+    currentLayerDepth += layerDepth;  
+    if (clamp(currentTexCoords, 0.0, 1.0) != currentTexCoords) break; 
+}
+
+return currentTexCoords;
+  
+}
+
+#endif
+
+
+void main()
+{
+    
+   
+    
+    
+    #ifdef POM
+    vec3 viewDir = viewDir;
+    vec2 uv0 = repeat(v_texcoord, opst)/opst;
+    vec2 uv1 = v_texcoord - (uv0*opst);
+    
+    if (cubeface == CUBE_UP) viewDir = viewDir.xzy;
+    if (cubeface == CUBE_DOWN) viewDir = vec3(viewDir.xz, -viewDir.y);
+    if (cubeface == CUBE_LEFT) viewDir = vec3(-viewDir.z, viewDir.yx);
+    if (cubeface == CUBE_RIGHT) viewDir = viewDir.zyx;
+    if (cubeface == CUBE_BACK) viewDir = viewDir;
+    if (cubeface == CUBE_FRONT) viewDir = vec3(-viewDir.x, viewDir.yz);
+    
+    
+    
+    vec2 parallaxCoord = clamp(ParallaxMapping(uv0, viewDir), 0.0, 0.99);
+    vec2 parallaxShadowCoord = clamp(ParallaxMapping(uv0, -LightPos.xzy*32.0), 0.0, 0.99);
+    
+    vec3 texNormal = texture2D(u_normalMap, parallaxCoord*opst+uv1).rgb;
+    texNormal = texNormal*2.0-1.0;
+    
+    vec4 texColor = texture2D(u_texture, parallaxCoord*opst+uv1);
+    
+    #else
+    vec4 texColor = texture2D(u_texture, v_texcoord);
+    #endif
+    vec4 result = texColor;
+    
+    if (result.a < 0.5)
+        discard;
+    
+    
+    
+    int block_texcoord = get_block(v_texcoord);
+    
+    
+    
+    
+    int DarkArea = 0;
+    
+    
+    result *= v_color;
+    
+	
+	
+	
+	
+	if (block_texcoord == 0 || block_texcoord == 22 || block_texcoord == 52 || block_texcoord == 132)
+	{
+        result.rgb *= 1.4;
+	}
+	else
+    {
+        result.rgb *= vec3(1.08, 1.004, 1.0);
+        result *= 1.575337;
+    }
+    
+    // reduce the brightness of some blocks, blocks that get too bright
+	if (block_texcoord == 180 || block_texcoord == 65 || block_texcoord == 7) result.rgb *= 0.65;
+    if (block_texcoord == 18 || block_texcoord == 35 || block_texcoord == 176) result.rgb *= 0.85;
+	if (block_texcoord == 40) result.rgb *= 0.735;
+	
+    
+    if (block_texcoord == 15 || block_texcoord == 24 || block_texcoord == 180 || block_texcoord == 182) 
+        result.a = float(block_texcoord)/255.0;
+    
+
+    gl_FragColor = result;
+    
+	
+}
+
+#endif

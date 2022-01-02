@@ -1,0 +1,124 @@
+#ifdef GLSL
+
+// <Sampler Name='u_samplerState' Texture='u_texture' />
+//// <Sampler Name='u_lightState' Texture='u_light' />
+
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+#ifdef USE_TEXTURE
+uniform sampler2D u_texture;
+//uniform sampler2D u_light;
+#endif
+#ifdef USE_ALPHATHRESHOLD
+uniform float u_alphaThreshold;
+#endif
+
+#ifdef USE_TEXTURE
+varying vec2 v_texcoord;
+#endif
+varying vec4 v_color;
+
+uniform vec3 u_viewDir;
+
+vec2 AdjustReflectionCoord(vec2 texcoord, vec2 distort, float GrainRandomChaos) {
+vec2 resultcoord = texcoord;
+
+
+
+
+
+
+resultcoord.y += (u_viewDir.y*1.25);
+
+
+
+
+
+
+
+//resultcoord.y -= (u_viewPosition.y-v_pos.y)*0.08;
+//resultcoord.y += 0.;
+
+//resultcoord.y += mix(0.0, 0.5, clamp(distance(u_viewPosition.xz, v_pos.xz)*0.05, 0.0, 1.0));
+
+resultcoord += sin((distort/1.5)*GrainRandomChaos)*0.015;
+
+
+if (resultcoord.x > 1.0 || resultcoord.y > 1.0 ||  resultcoord.x < 0.0 || resultcoord.y < 0.0) return v_texcoord;
+
+return resultcoord;
+
+}
+vec2 invert_y(vec2 uv)
+{
+    vec2 nuv = uv.xy;
+    nuv.y = 1.0-nuv.y;
+    return nuv;
+}
+vec2 invert_y(float base, vec2 uv)
+{
+    vec2 nuv = uv.xy;
+    nuv.y = base-nuv.y;
+    return nuv;
+}
+
+
+
+
+lowp vec3 aces(vec3 x)
+{
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
+    return clamp((x*(a*x+b))/(x*(c*x+d)+e), 0.0, 1.0);
+}
+
+void main()
+{
+	// Color
+	vec4 result = v_color;
+   
+   
+	// Texture
+#ifdef USE_TEXTURE
+	result *= texture2D(u_texture, v_texcoord);
+	
+#endif
+
+	// Alpha threshold
+#ifdef USE_ALPHATHRESHOLD
+	if (result.a <= u_alphaThreshold)
+		discard;
+#endif
+     int block_texcoord = int(result.a * 255.0);
+     
+     float LightAmount = max(result.r, max(result.g, result.b));
+	
+	if ((block_texcoord == 15 || block_texcoord == 24)) {
+    lowp vec3 OldPixelColor = texture2D(u_texture, AdjustReflectionCoord(invert_y(v_texcoord), result.rg, 7.6)).rgb;
+    if (OldPixelColor != vec3(0.0)) {
+        result.rgb = mix(result.rgb, OldPixelColor, 0.15);
+
+    }
+}
+if (block_texcoord == 180 || block_texcoord == 182) {
+    lowp vec3 OldPixelColor = texture2D(u_texture, AdjustReflectionCoord(invert_y(v_texcoord), result.rg + result.b, mix(13.45, 68.2725, float(block_texcoord - 180) / 2.0))).rgb;
+    if (OldPixelColor != vec3(0.0)) {
+        result.rgb = mix(result.rgb, OldPixelColor, 0.45);
+
+    }
+}
+    
+    
+    
+    
+    
+	// On some devices using gl_FragColor in calculations causes a compile fail (Kindle Fire 1)
+	gl_FragColor = result;
+}
+
+#endif

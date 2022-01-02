@@ -1,0 +1,11 @@
+﻿{
+  "Name": "ILTG Shader (Light Edition)",
+  "Version": "1.0",
+  "ApiVersion": "1.4",
+  "Description": "Survivalcraft Shader",
+  "ScVersion": "2.2.10.4",
+  "Link": "https://m.schub.top/com/mods/preview/163",
+  "Author": "NomeCriativoRFM",
+  "PackageName": "com.nomemods.shaders.iltg",
+  "Dependencies": []
+}
